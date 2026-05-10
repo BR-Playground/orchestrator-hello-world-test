@@ -16,6 +16,14 @@ primary_region = 'iad'
   min_machines_running = 0
   processes = ['app']
 
+# uncomment to enable support for runtime environment variables (also configure Dockerfile and docker-entrypoint.js)
+# [[http_service.checks]]
+#  grace_period = "30s"   # how long after start before checks begin
+#  interval = "10s"
+#  timeout = "5s"
+#  method = "GET"
+#  path = "/"
+
 [[vm]]
   cpus = 1
   memory_mb = 256

@@ -5,10 +5,11 @@ const { spawn } = require('node:child_process')
 const env = { ...process.env }
 
 ;(async() => {
+  // uncomment if runtime environment variables are needed (also configure Dockerfile and fly.toml)
   // If running the web server then prerender pages
-  if (process.argv.slice(-3).join(' ') === 'npm run start') {
-    await exec('npx next build --experimental-build-mode generate')
-  }
+  // if (process.argv.slice(-3).join(' ') === 'npm run start') {
+  //   await exec('npx next build --experimental-build-mode generate')
+  // }
 
   // launch application
   await exec(process.argv.slice(2).join(' '))

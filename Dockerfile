@@ -27,8 +27,12 @@ RUN npm ci --include=dev
 # Copy application code
 COPY . .
 
-# Build application
-RUN npx next build --experimental-build-mode compile
+# Build application (run one or the other)
+# default build implementation (no runtime env variables)
+RUN npx next build
+
+# if runtime environment variables are needed (also configure docker-entrypoint.js and fly.toml)
+# RUN npx next build --experimental-build-mode compile 
 
 # Remove development dependencies
 RUN npm prune --omit=dev
