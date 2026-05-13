@@ -5,8 +5,12 @@ import { redirect } from "next/navigation";
 
 export async function resetPassword(formData: FormData) {
     const supabase = await createClient();
+    const SITE_URL = process.env.SITE_URL;
+    
+    if (!SITE_URL) {
+        throw new Error("SITE_URL env var is required");
+    }
 
-    const SITE_URL = process.env.SITE_URL ?? "http://localhost:3000";
     const email = formData.get("email") as string;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {

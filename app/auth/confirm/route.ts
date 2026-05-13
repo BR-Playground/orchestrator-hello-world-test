@@ -7,23 +7,20 @@ export async function GET(request: NextRequest) {
     const token_hash = searchParams.get("token_hash");
     const type = searchParams.get("type") as EmailOtpType | null;
     const next = searchParams.get("next") ?? "/";
+    const SITE_URL = process.env.SITE_URL;
 
-    const redirectTo = request.nextUrl.clone();
-    redirectTo.pathname = next;
-    redirectTo.searchParams.delete("token_hash");
-    redirectTo.searchParams.delete("type");
-    redirectTo.searchParams.delete("next");
+    if (!SITE_URL) {
+        throw new Error("SITE_URL env var is required");
+    }
 
     if (token_hash && type) {
         const supabase = await createClient();
 
         const { error } = await supabase.auth.verifyOtp({ type, token_hash });
         if (!error) {
-            return NextResponse.redirect(redirectTo);
+            return NextResponse.redirect(`${SITE_URL}${next}`);
         }
     }
-
-    redirectTo.pathname = "/login";
-    redirectTo.searchParams.set("error", "Invalid or expired confirmation link.");
-    return NextResponse.redirect(redirectTo);
+    
+    return NextResponse.redirect(`${SITE_URL}/login?error=${encodeURIComponent("Invalid or expired confirmation link.")}`);
 }

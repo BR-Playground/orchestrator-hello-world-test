@@ -24,8 +24,12 @@ export async function login(formData: FormData) {
 
 export async function register(formData: FormData) {
     const supabase = await createClient();
+    const SITE_URL = process.env.SITE_URL;
 
-    const SITE_URL = process.env.SITE_URL ?? "http://localhost:3000";
+    if (!SITE_URL) {
+        throw new Error("SITE_URL env var is required");
+    }
+
     const credentials = {
         email: formData.get("email") as string,
         password: formData.get("password") as string,
@@ -53,7 +57,11 @@ export async function logout() {
 
 export async function signInWithGithub() {
     const supabase = await createClient();
-    const SITE_URL = process.env.SITE_URL ?? "http://localhost:3000";
+    const SITE_URL = process.env.SITE_URL;
+    
+    if (!SITE_URL) {
+        throw new Error("SITE_URL env var is required");
+    }
 
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "github",
