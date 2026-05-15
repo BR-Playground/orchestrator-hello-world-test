@@ -67,4 +67,14 @@ describe("Home page", () => {
       screen.queryByRole("link", { name: /log in/i }),
     ).not.toBeInTheDocument();
   });
+
+  it("shows a View projects link when signed in", async () => {
+    mockGetClaims.mockResolvedValue({
+      data: { claims: { email: "test@example.com", sub: "abc-123" } },
+    });
+    render(await Page());
+    expect(
+      screen.getByRole("link", { name: /view projects/i }),
+    ).toHaveAttribute("href", "/projects");
+  });
 });

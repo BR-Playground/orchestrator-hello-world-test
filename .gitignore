@@ -16,3 +16,6 @@ next-env.d.ts
 
 # VS Code
 .vscode/
+
+# Supabase cLI
+supabase/.temp/

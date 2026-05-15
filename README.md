@@ -15,9 +15,17 @@ A successfully merged pull request authored by the AI agent — in response to a
 - **Next.js 15** (App Router, React Server Components)
 - **React 19** + **TypeScript**
 - **Tailwind CSS 3** + **shadcn/ui**
-- **Supabase Auth** (email/password, GitHub OAuth, password reset)
+- **Supabase** for Auth (email/password, GitHub OAuth, password reset) and Postgres with Row-Level Security
+- **zod** for runtime validation
 - **Vitest** + **React Testing Library**
 - **Fly.io** for deployment (production + per-PR previews)
+
+## Features
+
+- **Authentication**: email/password signup + login, GitHub OAuth, email verification, password reset, logout
+- **Projects** (per-user, RLS-isolated): list (paginated), detail, create, edit, delete-with-confirmation
+- **Dark mode toggle**
+- **Per-PR preview deploys** on Fly.io
 
 ## Running Locally
 
@@ -60,7 +68,21 @@ For GitHub OAuth, also:
 - Register an OAuth app at [github.com/settings/developers](https://github.com/settings/developers) with callback URL `https://<project-ref>.supabase.co/auth/v1/callback`.
 - Paste the Client ID and Client Secret into **Supabase → Authentication → Providers → GitHub**.
 
-### 4. Run the dev server
+### 4. Apply database migrations
+
+The Supabase schema lives in [supabase/migrations/](supabase/migrations/) as numbered SQL files. For a fresh Supabase project, apply them in order via the Supabase dashboard → **SQL Editor** → paste each migration → Run.
+
+### 5. Generate TypeScript types from the schema
+
+```bash
+npx supabase login
+npx supabase link --project-ref <your-project-ref>
+npm run db:types
+```
+
+This populates `lib/supabase/database.types.ts` so every Supabase query is fully type-safe. **Re-run `npm run db:types` after any future migration.**
+
+### 6. Run the dev server
 
 ```bash
 npm run dev
@@ -117,7 +139,11 @@ https://orchestrator-hello-world-test-pr-*.fly.dev/**
 
 | Path | Purpose |
 |------|---------|
-| `app/(app)/page.tsx` | Home page (authenticated; `/`) |
+| `app/(app)/page.tsx` | Home page (`/`), public; renders conditionally based on auth state |
+| `app/(app)/projects/` | Projects CRUD — list, detail, new, edit |
+| `app/(app)/projects/queries.ts` | Read helpers (e.g. `getProject(id)`); also re-exports the `Project` row type |
+| `app/(app)/projects/actions.ts` | Server Actions for create/update/delete |
+| `app/(app)/projects/schema.ts` | zod schema for project input + inferred type |
 | `app/(auth)/login/` | Login + register form, GitHub OAuth, forgot-password link |
 | `app/(auth)/forgot-password/` | Password reset request |
 | `app/(auth)/reset-password/` | New-password form (entered via recovery email link) |
@@ -125,10 +151,12 @@ https://orchestrator-hello-world-test-pr-*.fly.dev/**
 | `app/auth/confirm/route.ts` | Email/recovery OTP verifier |
 | `app/auth/callback/route.ts` | OAuth code-for-session exchanger |
 | `app/layout.tsx` + `app/globals.css` | Root HTML shell, Tailwind directives, shadcn theme variables |
-| `components/ui/` | shadcn primitives (Button, Input, Label, Separator, Field) |
+| `components/ui/` | shadcn primitives (Button, Input, Textarea, Select, Field, Card, Badge, AlertDialog, Empty, Separator, Label) |
 | `components/icons/github.tsx` | Inline GitHub SVG (lucide's `Github` is deprecated) |
 | `components/theme-toggle.tsx` | Dark mode toggle (Client Component example) |
 | `lib/supabase/{client,server,proxy}.ts` | Three Supabase client factories — one per execution context |
+| `lib/supabase/database.types.ts` | Generated TS types from the Supabase schema (`npm run db:types`) |
+| `supabase/migrations/` | Versioned SQL files defining tables, indexes, and RLS policies |
 | `middleware.ts` | Refreshes Supabase session on every request; gates protected routes |
 | `test/` | Vitest test suite |
 | `fly.toml`, `Dockerfile`, `docker-entrypoint.js` | Fly.io deployment config |

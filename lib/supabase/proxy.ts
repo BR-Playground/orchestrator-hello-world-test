@@ -1,10 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { Database } from "@/lib/supabase/database.types";
 
 export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({ request, });
 
-    const supabase = createServerClient(
+    const supabase = createServerClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
         {
@@ -36,6 +37,7 @@ export async function updateSession(request: NextRequest) {
     const user = data?.claims;
     if (
         !user &&
+        request.nextUrl.pathname !== '/' &&
         !request.nextUrl.pathname.startsWith('/login') &&
         !request.nextUrl.pathname.startsWith('/forgot-password') &&
         !request.nextUrl.pathname.startsWith('/auth')
