@@ -3,12 +3,10 @@
 import { toFieldErrors, type FormState } from "@/lib/form-state";
 import { createClient } from "@/lib/supabase/server";
 import { forgotPasswordSchema } from "./schema";
+import { getSiteUrl } from "@/lib/env";
 
 export async function resetPassword(_prevState: FormState, formData: FormData): Promise<FormState> {
-    const SITE_URL = process.env.SITE_URL;
-    if (!SITE_URL) {
-        throw new Error("SITE_URL env var is required");
-    }
+    const SITE_URL = getSiteUrl();
 
     const result = forgotPasswordSchema.safeParse(Object.fromEntries(formData));
     if (!result.success) {

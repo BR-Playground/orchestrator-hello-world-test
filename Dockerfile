@@ -27,6 +27,13 @@ RUN npm ci --include=dev
 # Copy application code
 COPY . .
 
+# NEXT_PUBLIC_* vars must be set during `next build` so Next.js inlines
+# them into the compiled output. Passed via --build-arg from deploy workflows.
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+
 # Build application (run one or the other)
 # default build implementation (no runtime env variables)
 RUN npx next build

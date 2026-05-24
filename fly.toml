@@ -27,7 +27,4 @@ primary_region = 'iad'
 [[vm]]
   cpus = 1
   memory_mb = 256
-
-[env]
-  NEXT_PUBLIC_SUPABASE_URL="https://mqrdpgjavmmklsimnqcx.supabase.co"
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="sb_publishable_l17M35WHcRV0Z0e0cg6V-Q_0HUjNHZn"
+  

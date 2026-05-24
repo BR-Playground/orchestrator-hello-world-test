@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
-import { DeleteAccountButton } from "@/app/(app)/profile/delete-account-button";
+import { DeleteAccountButton } from "@/app/(app)/profile/(forms)/delete-account-button";
 
 type State = {
   error?: string;

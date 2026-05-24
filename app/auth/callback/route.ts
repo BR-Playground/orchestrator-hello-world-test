@@ -1,3 +1,4 @@
+import { getSiteUrl } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -5,11 +6,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get("code");
     const next = searchParams.get("next") ?? "/";
-    const SITE_URL = process.env.SITE_URL;
-
-    if (!SITE_URL) {
-        throw new Error("SITE_URL env var is required");
-    }
+    const SITE_URL = getSiteUrl();
 
     if (code) {
         const supabase = await createClient();

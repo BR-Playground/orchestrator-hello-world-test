@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { loginSchema, registerSchema } from "./schema";
+import { getSiteUrl } from "@/lib/env";
 
 export async function login(_prevState: FormState, formData: FormData): Promise<FormState> {
     const result = loginSchema.safeParse(Object.fromEntries(formData));
@@ -23,10 +24,7 @@ export async function login(_prevState: FormState, formData: FormData): Promise<
 }
 
 export async function register(_prevState: FormState, formData: FormData): Promise<FormState> {
-    const SITE_URL = process.env.SITE_URL;
-    if (!SITE_URL) {
-        throw new Error("SITE_URL env var is required");
-    }
+    const SITE_URL = getSiteUrl();
     
     const result = registerSchema.safeParse(Object.fromEntries(formData));
     if (!result.success) {
@@ -55,11 +53,11 @@ export async function logout() {
 }
 
 export async function signInWithGithub(): Promise<FormState> {
-    const SITE_URL = process.env.SITE_URL;
-    if (!SITE_URL) {
-        throw new Error("SITE_URL env var is required");
+    if (process.env.NEXT_PUBLIC_GITHUB_OAUTH_ENABLED?.trim().toLowerCase() === "false") {
+        return { error: "GitHub OAuth is disabled" };
     }
-    
+
+    const SITE_URL = getSiteUrl();
     const supabase = await createClient();
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "github",

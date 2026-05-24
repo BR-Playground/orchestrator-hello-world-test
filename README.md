@@ -41,15 +41,23 @@ npm install
 
 ### 2. Set environment variables
 
-Create `.env.local` in the repo root:
+Copy the template:
 
 ```bash
+cp .env.local.example .env.local
+```
+
+Then fill in your Supabase project's values:
+
+```
 NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<sb_publishable_...>
 SITE_URL=http://localhost:3000
 ```
 
-Get the Supabase URL and publishable key from your Supabase project dashboard → **Project Settings → API**.
+Get the URL and publishable key from **Project Settings → API** in the Supabase dashboard.
+
+Optional: add `NEXT_PUBLIC_GITHUB_OAUTH_ENABLED=false` to disable the GitHub OAuth button (defaults to enabled). Use this if your environment doesn't have GitHub OAuth configured (e.g. a trial sandbox).
 
 ### 3. Configure Supabase (one-time)
 
@@ -57,53 +65,57 @@ In your Supabase project:
 
 - **Authentication → URL Configuration → Site URL** — `http://localhost:3000`
 - **Authentication → URL Configuration → Redirect URLs** — add `http://localhost:3000/**`
-- **Authentication → Email Templates** — update **Confirm signup** and **Reset Password** to use the PKCE format:
+- **Authentication → Email Templates** — update **Confirm signup** and **Reset Password** to use the PKCE format with `{{ .RedirectTo }}` (not `{{ .SiteURL }}` — the redirect placeholder is substituted with the per-environment URL passed by the auth action's `emailRedirectTo` param, so production / PR-preview / local-dev all generate the correct link without dashboard re-configuration):
   ```html
-  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/">
+  <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email&next=/">
     Confirm your email
   </a>
   ```
-  (Use `type=email` for signup, `type=recovery` and `next=/reset-password` for password reset.)
+  (Use `type=email` for signup, `type=recovery` and `next=/reset-password` for password reset.) Note: the template does **not** include `/auth/confirm` because the action passes the full path (`${SITE_URL}/auth/confirm`) as `emailRedirectTo`, which `{{ .RedirectTo }}` substitutes in whole.
 
 For GitHub OAuth, also:
 
 - Register an OAuth app at [github.com/settings/developers](https://github.com/settings/developers) with callback URL `https://<project-ref>.supabase.co/auth/v1/callback`.
 - Paste the Client ID and Client Secret into **Supabase → Authentication → Providers → GitHub**.
 
+To disable GitHub OAuth in a given environment, set `NEXT_PUBLIC_GITHUB_OAUTH_ENABLED=false` (in `.env.local` for dev, as a build-arg or env var for deploys). The `/login` page hides the GitHub button and the action rejects with `"GitHub OAuth is disabled"` if invoked directly. Useful for trial sandboxes that don't have OAuth provider config.
+
 ### 4. Apply database migrations
 
-The Supabase schema lives in [supabase/migrations/](supabase/migrations/) as numbered SQL files. For a fresh Supabase project, apply them in order via the Supabase dashboard → **SQL Editor** → paste each migration → Run.
+Migrations live in [supabase/migrations/](supabase/migrations/) as numbered SQL files. Apply them all in one shot via the CLI:
 
-For an existing Supabase project that has users from before the profiles migration, backfill profiles for existing users in the SQL Editor:
+```bash
+npx supabase login         # one-time PAT auth
+npx supabase link --project-ref <your-project-ref>
+npx supabase db push       # applies all migrations 00001-00009 in order
+```
+
+This includes the avatars Storage bucket + policies (00007 + 00008) and the sample-projects-on-signup trigger (00009) — no dashboard intervention needed.
+
+**For an existing dev project** that has users from before migration 00005 (profiles trigger), backfill profiles for those users via the SQL editor:
 ```sql
 insert into profiles (user_id)
 select id from auth.users
 where id not in (select user_id from profiles);
 ```
 
-### 5. Create the avatars Storage bucket
+The 00009 sample-projects trigger only fires on *new* signups — existing dev users won't get sample data retroactively. Add rows by hand if you want them.
 
-Profile avatars live in a Supabase Storage bucket — this isn't covered by migrations and must be set up via the dashboard:
+### 5. Avatars Storage bucket (handled by migration)
 
-1. **Storage → New bucket** → name `avatars`, toggle **Public bucket** on
-2. Under the bucket's settings, set **Allowed MIME types** to `image/png,image/jpeg,image/webp,image/gif` and **File size limit** to `5 MB`
-3. Add four policies on the bucket (the dashboard's policy template picker simplifies this):
-   - **SELECT** — "Anyone can view avatars": `using (true)`
-   - **INSERT** — "Users can upload their own avatar": `using ((bucket_id = 'avatars') AND ((storage.foldername(name))[1] = auth.uid()::text))`
-   - **UPDATE** — same predicate as INSERT
-   - **DELETE** — same predicate as INSERT
+The `avatars` bucket, its MIME allowlist (PNG/JPEG/WebP/GIF), the 5 MB size cap, and four per-row Storage policies are created by migrations [`00007_avatars_bucket.sql`](supabase/migrations/00007_avatars_bucket.sql) + [`00008_avatars_rls.sql`](supabase/migrations/00008_avatars_rls.sql). Applied automatically by `npx supabase db push` in step 4 — no dashboard work needed.
 
-The path convention is `<user_id>/<filename>` so the folder-name check scopes writes to the user's own folder.
+File path convention is `<user_id>/<filename>` — the per-user-folder write policies enforce it via `(storage.foldername(name))[1] = auth.uid()::text`.
 
 ### 6. Generate TypeScript types from the schema
 
+After every migration (including ones that only add Postgres functions or triggers), regenerate the TypeScript types:
+
 ```bash
-npx supabase login
-npx supabase link --project-ref <your-project-ref>
 npm run db:types
 ```
 
-This populates `lib/supabase/database.types.ts` so every Supabase query is fully type-safe. **Re-run `npm run db:types` after any future migration** — including ones that add/modify Postgres functions or triggers, not just tables.
+This populates [lib/supabase/database.types.ts](lib/supabase/database.types.ts) so every Supabase query is fully type-safe. Already linked from Step 4 above — no separate login/link needed.
 
 ### 7. Run the dev server
 
@@ -150,7 +162,9 @@ Production and preview deploys are automated via GitHub Actions:
 - **Production** ([fly-deploy.yml](.github/workflows/fly-deploy.yml)) — deploys on push to `main` (or via manual `workflow_dispatch`). Requires repo secret `FLY_API_TOKEN` scoped to the production app.
 - **Per-PR previews** ([fly-preview.yml](.github/workflows/fly-preview.yml)) — creates `orchestrator-hello-world-test-pr-<N>` on PR open, deploys on each push, destroys on PR close. Requires repo secret `FLY_API_TOKEN_PREVIEW` (org-scoped) and repo variable `FLY_ORG`.
 
-`NEXT_PUBLIC_SUPABASE_*` values live in [fly.toml](fly.toml) under `[env]`. The `SITE_URL` is per-app (Fly secret) — set on production with `flyctl secrets set --app <app-name> SITE_URL=https://...`. Preview apps get their `SITE_URL` set automatically by the workflow.
+Build-time env vars (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) are stored as **GitHub repo variables** (Settings → Secrets and variables → Actions → Variables tab) and passed to `flyctl deploy` as `--build-arg` by both workflow files. This is required because `NEXT_PUBLIC_*` values are inlined into the compiled bundle at build time, not read at runtime.
+
+`SITE_URL` is a per-app Fly secret because each environment needs its own value. Set on production with `flyctl secrets set --app <app-name> SITE_URL=https://...`. Preview apps get their `SITE_URL` set automatically by [fly-preview.yml](.github/workflows/fly-preview.yml).
 
 Add production and preview URLs to your Supabase **Redirect URLs** allowlist to make auth flows work on deployed environments:
 ```

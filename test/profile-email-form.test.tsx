@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { EmailForm } from "@/app/(app)/profile/email-form";
+import { EmailForm } from "@/app/(app)/profile/(forms)/email-form";
 
 type State = {
   error?: string;

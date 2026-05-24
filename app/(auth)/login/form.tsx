@@ -20,6 +20,7 @@ export function LoginForm() {
     const [loginState, loginAction] = useActionState(login, emptyFormState);
     const [registerState, registerAction] = useActionState(register, emptyFormState);
     const [githubState, githubAction] = useActionState(signInWithGithub, emptyFormState);
+    const githubEnabled = process.env.NEXT_PUBLIC_GITHUB_OAUTH_ENABLED?.trim().toLowerCase() !== "false";
 
     const activeState = isRegistering ? registerState : loginState;
     const formLevelError = githubState.error ?? activeState.error;
@@ -40,24 +41,27 @@ export function LoginForm() {
             </p>
         )}
 
-        <form action={githubAction}>
-            <SubmitButton variant="outline" className="w-full" pendingLabel="Redirecting...">
-                <GithubIcon className="mr-2 size-4"/>
-                Continue with GitHub
-            </SubmitButton>
-        </form>
-        
-        <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t"/>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                    or continue with email
-                </span>
-            </div>
-        </div>
-
+        {githubEnabled && (
+            <>
+                <form action={githubAction}>
+                    <SubmitButton variant="outline" className="w-full" pendingLabel="Redirecting...">
+                        <GithubIcon className="mr-2 size-4"/>
+                        Continue with GitHub
+                    </SubmitButton>
+                </form>
+                
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t"/>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">
+                            or continue with email
+                        </span>
+                    </div>
+                </div>
+            </>
+        )}
         <form action={isRegistering ? registerAction : loginAction}>
             <FieldGroup>
                 <Field data-invalid={!!activeState.fieldErrors?.email}>

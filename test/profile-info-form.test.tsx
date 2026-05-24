@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { ProfileInfoForm } from "@/app/(app)/profile/profile-info-form";
+import { ProfileInfoForm } from "@/app/(app)/profile/(forms)/profile-info-form";
 import type { Profile } from "@/app/(app)/profile/queries";
 
 type State = {

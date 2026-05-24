@@ -24,6 +24,8 @@ jobs:
             FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_PREVIEW }}
             FLY_ORG: ${{ vars.FLY_ORG }}
             APP_NAME: orchestrator-hello-world-test-pr-${{ github.event.pull_request.number }}
+            NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
         
         steps:
             - uses: actions/checkout@v4
@@ -45,7 +47,9 @@ jobs:
                 flyctl deploy \
                     --local-only \
                     --app "$APP_NAME" \
-                    --ha=false
+                    --ha=false \
+                    --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+                    --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
             
             - name: Post preview URL comment on deployment
               if: github.event.action != 'closed'
