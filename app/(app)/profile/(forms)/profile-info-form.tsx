@@ -1,7 +1,7 @@
 "use client";
 
-import { Profile } from "./queries";
-import { updateProfile } from "./actions";
+import { Profile } from "../queries";
+import { updateProfile } from "../actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "lucide-react";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";

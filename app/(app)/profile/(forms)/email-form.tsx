@@ -1,6 +1,6 @@
 "use client";
 
-import { updateEmail } from "./actions";
+import { updateEmail } from "../actions";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useActionState, useEffect } from "react";

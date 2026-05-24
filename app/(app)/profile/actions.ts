@@ -6,6 +6,7 @@ import { emailSchema, passwordSchema, profileSchema } from "./schema";
 import { Database } from "@/lib/supabase/database.types";
 import { revalidatePath } from "next/cache";
 import { type FormState, toFieldErrors } from "@/lib/form-state";
+import { getSiteUrl } from "@/lib/env";
 
 type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 
@@ -66,10 +67,7 @@ export async function updateProfile(_prevState: FormState, formData: FormData): 
 }
 
 export async function updateEmail(_prevState: FormState, formData: FormData): Promise<FormState> {
-    const SITE_URL = process.env.SITE_URL;
-    if (!SITE_URL) {
-        throw new Error("SITE_URL env var is required");
-    }
+    const SITE_URL = getSiteUrl();
     
     const result = emailSchema.safeParse({ email: formData.get("email") });
     if (!result.success) {

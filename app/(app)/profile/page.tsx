@@ -2,11 +2,11 @@ import type { Metadata } from 'next';
 import { getProfile } from './queries';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ProfileInfoForm } from './profile-info-form';
-import { EmailForm } from './email-form';
+import { ProfileInfoForm } from './(forms)/profile-info-form';
+import { EmailForm } from './(forms)/email-form';
 import { createClient } from '@/lib/supabase/server';
-import { PasswordForm } from './password-form';
-import { DeleteAccountButton } from './delete-account-button';
+import { PasswordForm } from './(forms)/password-form';
+import { DeleteAccountButton } from './(forms)/delete-account-button';
 
 export const metadata: Metadata = {
     title: "Profile"

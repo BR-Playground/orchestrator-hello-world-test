@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { LoginForm } from "@/app/(auth)/login/form";
 
@@ -307,5 +307,38 @@ describe("LoginForm", () => {
       fireEvent.click(screen.getByRole("button", { name: /^register$/i }));
       expect(screen.getByText(/creating account/i)).toBeInTheDocument();
     });
+  });
+
+  describe("when GitHub OAuth is disabled via env var", () => {
+    // Per-describe env stubbing so the disabled state doesn't leak into the
+    // other describes (which rely on the default-enabled rendering).
+    beforeEach(() => {
+      vi.stubEnv("NEXT_PUBLIC_GITHUB_OAUTH_ENABLED", "false");
+    });
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("hides the GitHub OAuth button and the email-form divider", () => {
+      render(<LoginForm />);
+      expect(
+        screen.queryByRole("button", { name: /continue with github/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/or continue with email/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it.each([["FALSE"], [" false "], ["False"]])(
+      "treats normalized %j as disabled",
+      (envValue) => {
+        vi.stubEnv("NEXT_PUBLIC_GITHUB_OAUTH_ENABLED", envValue);
+        render(<LoginForm />);
+        expect(
+          screen.queryByRole("button", { name: /continue with github/i }),
+        ).not.toBeInTheDocument();
+      },
+    );
   });
 });
