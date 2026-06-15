@@ -31,6 +31,14 @@ describe("Home page", () => {
     expect(screen.getByText(/AI-Implement/i)).toBeInTheDocument();
   });
 
+  it("shows the AII test mid success message", async () => {
+    mockGetClaims.mockResolvedValue({ data: null });
+    render(await Page());
+    expect(
+      screen.getByText(/AII test - mid was successful/i),
+    ).toBeInTheDocument();
+  });
+
   it("shows a Log in link when no user is signed in", async () => {
     mockGetClaims.mockResolvedValue({ data: null });
     render(await Page());
