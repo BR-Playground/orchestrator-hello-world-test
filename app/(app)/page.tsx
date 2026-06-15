@@ -14,11 +14,7 @@ export default async function Home() {
                 This page is served by a minimal Next.js + shadcn application used to
                 validate the end-to-end AI-Implement integration. Its only purpose is
                 to confirm that the scaffolding runs correctly — no real application
-<<<<<<< ai-implement/br526-7-aii-test-leaf-a
-                logic lives here. AII test - leaf A was successful.
-=======
-                logic lives here. AII test - leaf B was successful.
->>>>>>> ai-implement/feature/br526-5
+                logic lives here. AII test - leaf A was successful. AII test - mid was successful.
             </p>
             {user ? (
                 <p className="text-muted-foreground"> Signed in as {user.email} </p>
